@@ -13,6 +13,8 @@ $(function(){
 		win = $(window),
 		canvas = $('#paper'),
 		ctx = canvas[0].getContext('2d'),
+		session = $('#new-session'),
+		joinSession = $('#join-session'),
 		instructions = $('#instructions');
 	
 	// Generate an unique ID
@@ -23,6 +25,7 @@ $(function(){
 
 	var clients = {};
 	var cursors = {};
+	var currentSession;
 
 	var socket = io.connect(url);
 	
@@ -55,6 +58,30 @@ $(function(){
 
 	var prev = {};
 	
+	session.click(function()
+	{
+		console.log("session clicked");
+		currentSession = Math.round($.now()*Math.random()/100000000);
+		socket.emit('new-session',{
+			'sid' : currentSession
+		});
+		window.alert("session "+ sessionid +" created");	
+	});
+	joinSession.click(function()
+	{
+		console.log("join session clicked");
+		var join = prompt("Please enter session id to join");
+		if(join !==null && join !=='')
+		{
+			window.alert("joining session");
+			currentSession = join;
+			socket.emit('join-session',{
+			'jid' : join
+		});
+
+		}
+			
+	});
 	canvas.on('mousedown',function(e){
 		e.preventDefault();
 		drawing = true;
@@ -74,10 +101,14 @@ $(function(){
 	doc.on('mousemove',function(e){
 		if($.now() - lastEmit > 30){
 			socket.emit('mousemove',{
+				id : currentSession,
+				data : 
+				{
 				'x': e.pageX,
 				'y': e.pageY,
 				'drawing': drawing,
 				'id': id
+			}
 			});
 			lastEmit = $.now();
 		}
